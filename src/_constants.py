@@ -10,3 +10,4 @@ class PIAConstants():
         self.connect_cmd: list[str] = ['connect']
         self.dedicatedip_add_cmd: list[str] = ['dedicatedip', 'add']
         self.dedicatedip_remove_cmd: list[str] = ['dedicatedip', 'remove']
+        self.disconnect_cmd: list[str] = ['disconnect']

@@ -99,7 +99,7 @@ class PIA():
         self,
         timeout_in_s: None | int = None, 
         debug_option: bool = False
-    ):
+    ) -> str:
         """
         Connects to the VPN, or reconnects to apply new settings. 
         To use this command, the PIA GUI client must be running, 
@@ -113,3 +113,16 @@ class PIA():
             debug_option
         )
     
+    def disconnect(
+        self,
+        timeout_in_s: None | int = None, 
+        debug_option: bool = False
+    ) -> str:
+        """
+        Disconnects from the VPN.
+        """
+        return self._exec_one_shot_cmd(
+            self._constants.disconnect_cmd,
+            timeout_in_s,
+            debug_option
+        )

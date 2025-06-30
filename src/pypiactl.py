@@ -2,6 +2,7 @@
 from ._background import PIABackground
 from ._config import PIAConfig
 from ._constants import PIAConstants
+from ._dedicatedip import PIADedicatedIP
 
 # External Imports
 import subprocess
@@ -23,6 +24,45 @@ class PIA():
         killswitch if the GUI client is not running.
         """
 
+        self.dedicatedip = PIADedicatedIP(self)
+        """
+        Add or remove a Dedicated IP.
+        """
+
+    def _get_cmd_timeout(
+        self,
+        parameter_timeout: None | int
+    ) -> None | int:
+        """
+        Determines if there will be a timeout flag for a
+        command, and if there is, what the value will be.
+        """
+        if parameter_timeout:
+            if parameter_timeout < 1:
+                warnings.warn("One-shot command timeout must be 1 or greater if not None! Ignoring!")
+                return None
+            else:
+                return parameter_timeout
+        elif self._config.one_shot_timeout_in_s:
+            return self._config.one_shot_timeout_in_s
+        else:
+            return None
+        
+    def _get_cmd_debug(
+        self,
+        parameter_debug: bool
+    ) -> bool:
+        """
+        Determines whether a command will include its 
+        debug logs in its returned output.
+        """
+        if parameter_debug:
+            return parameter_debug
+        elif self._config.debug_option:
+            return self._config.debug_option
+        else:
+            return False
+
     def _exec_one_shot_cmd(
         self, 
         cmd: list[str], 
@@ -34,25 +74,12 @@ class PIA():
         full_cmd = [self._config.executable_path]
 
         # Timeout option
-        timeout = None
-        if timeout_in_s:
-            if timeout_in_s < 1:
-                warnings.warn("One-shot command timeout must be 1 or greater if not None! Ignoring!")
-            else:
-                timeout = timeout_in_s
-        elif self._config.one_shot_timeout_in_s:
-            timeout = self._config.one_shot_timeout_in_s
-
+        timeout = self._get_cmd_timeout(timeout_in_s)
         if timeout:
             full_cmd += [self._constants.timeout_flag, str(timeout)]
 
         # Debug option
-        debug = None
-        if debug_option:
-            debug = debug_option
-        elif self._config.debug_option:
-            debug = self._config.debug_option
-        
+        debug = self._get_cmd_debug(debug_option)
         if debug:
             full_cmd += [self._constants.debug_flag]
         

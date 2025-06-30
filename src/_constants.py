@@ -8,3 +8,5 @@ class PIAConstants():
         self.background_enable_cmd: list[str] = ['background', 'enable']
         self.background_disable_cmd: list[str] = ['background', 'disable']
         self.connect_cmd: list[str] = ['connect']
+        self.dedicatedip_add_cmd: list[str] = ['dedicatedip', 'add']
+        self.dedicatedip_remove_cmd: list[str] = ['dedicatedip', 'remove']

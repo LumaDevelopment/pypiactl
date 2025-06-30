@@ -1,0 +1,10 @@
+class PIAConstants():
+    def __init__(self):
+        # Options
+        self.timeout_flag: str = '-t'
+        self.debug_flag: str = '-d'
+
+        # Commands
+        self.background_enable_cmd: list[str] = ['background', 'enable']
+        self.background_disable_cmd: list[str] = ['background', 'disable']
+        self.connect_cmd: list[str] = ['connect']

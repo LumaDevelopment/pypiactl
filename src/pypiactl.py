@@ -3,6 +3,7 @@ from ._background import PIABackground
 from ._config import PIAConfig
 from ._constants import PIAConstants
 from ._dedicated_ip import PIADedicatedIP
+from ._monitors import PIAMonitors
 from ._types import PIACommandResult, PIACommandStatus
 
 # External Imports
@@ -35,6 +36,14 @@ class PIA():
         self.dedicated_ip = PIADedicatedIP(self)
         """
         Add or remove a Dedicated IP.
+        """
+
+        self.monitor = PIAMonitors(self)
+        """
+        Monitors the PIA daemon for changes in a specific setting or 
+        state value.\n
+        When an observer attaches, the current value is returned.\n
+        When a change is received, the observer is updated.
         """
 
     def _get_cmd_timeout(

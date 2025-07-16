@@ -65,4 +65,42 @@ class PIAConnectionState(Enum):
 
     @classmethod
     def from_value(cls, value: str) -> "PIAConnectionState":
-        return cls._value2member_map_.get(value, PIAConnectionState.UNKNOWN) # type: ignore
+        return cls._value2member_map_.get(
+            value, PIAConnectionState.UNKNOWN
+        ) # type: ignore
+
+class PIAInformationType(Enum):
+    ALLOW_LAN = 'allowlan'
+    CONNECTION_STATE = 'connectionstate'
+    DEBUG_LOGGING = 'debuglogging'
+    PORT_FORWARD = 'portforward'
+    PROTOCOL = 'protocol'
+    PUB_IP = 'pubip'
+    REGION = 'region'
+    REGIONS = 'regions'
+    REQUEST_PORT_FORWARD = 'requestportforward'
+    VPN_IP = 'vpnip'
+
+class PIAPortForwardStatus(Enum):
+    INACTIVE = 'Inactive'
+    ATTEMPTING = 'Attempting'
+    FAILED = 'Failed'
+    UNAVAILABLE = 'Unavailable'
+    UNKNOWN = 'Unknown'
+
+    @classmethod
+    def from_value(cls, value: str) -> "PIAPortForwardStatus":
+        return cls._value2member_map_.get(
+            value, PIAPortForwardStatus.UNKNOWN
+        ) # type: ignore
+
+class PIAProtocol(Enum):
+    OPENVPN = 'openvpn'
+    WIREGUARD = 'wireguard'
+    UNKNOWN = 'unknown'
+
+    @classmethod
+    def from_value(cls, value: str) -> "PIAProtocol":
+        return cls._value2member_map_.get(
+            value, PIAProtocol.UNKNOWN
+        ) # type: ignore

@@ -12,4 +12,5 @@ class PIAConstants():
         self.dedicatedip_remove_cmd: list[str] = ['dedicatedip', 'remove']
         self.disconnect_cmd: list[str] = ['disconnect']
         self.get_cmd: list[str] = ['get']
+        self.monitor_cmd: list[str] = ['monitor']
         self.version_cmd: list[str] = ['-v']

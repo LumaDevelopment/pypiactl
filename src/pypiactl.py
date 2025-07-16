@@ -2,12 +2,20 @@
 from ._background import PIABackground
 from ._config import PIAConfig
 from ._constants import PIAConstants
-from ._dedicatedip import PIADedicatedIP
+from ._dedicated_ip import PIADedicatedIP
+from ._types import PIACommandResult, PIACommandStatus
 
 # External Imports
 import subprocess
 import warnings
 
+# CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
+# TODO add get command
+# TODO add login command
+# TODO add logout command
+# TODO add monitor command
+# TODO add resetsettings command
+# TODO add set command
 class PIA():
     def __init__(self, config: PIAConfig=PIAConfig()):
         self._config = config
@@ -24,7 +32,7 @@ class PIA():
         killswitch if the GUI client is not running.
         """
 
-        self.dedicatedip = PIADedicatedIP(self)
+        self.dedicated_ip = PIADedicatedIP(self)
         """
         Add or remove a Dedicated IP.
         """
@@ -68,7 +76,7 @@ class PIA():
         cmd: list[str], 
         timeout_in_s: None | int = None, 
         debug_option: bool = False
-    ) -> str:
+    ) -> tuple[int, str]:
         # Assemble full command from executable, 
         # options, and provided command.
         full_cmd = [self._config.executable_path]
@@ -92,37 +100,46 @@ class PIA():
             stderr=subprocess.STDOUT,
             text=True
         )
-
-        return result.stdout.strip()
+        
+        return (result.returncode, result.stdout.strip())
     
-    def connect(
-        self,
-        timeout_in_s: None | int = None, 
-        debug_option: bool = False
-    ) -> str:
+    def connect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Connects to the VPN, or reconnects to apply new settings. 
         To use this command, the PIA GUI client must be running, 
         or background mode must be enabled.
-        (By default, he PIA daemon is inactive when the GUI client
+        (By default, the PIA daemon is inactive when the GUI client
         is not running.)
         """
-        return self._exec_one_shot_cmd(
+        code, logs = self._exec_one_shot_cmd(
             self._constants.connect_cmd,
-            timeout_in_s,
-            debug_option
+            **kwargs
+        )
+
+        return PIACommandResult[PIACommandStatus, None](
+            PIACommandStatus.from_cli_exit_code(code),
+            None, logs
         )
     
-    def disconnect(
-        self,
-        timeout_in_s: None | int = None, 
-        debug_option: bool = False
-    ) -> str:
+    def disconnect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Disconnects from the VPN.
         """
-        return self._exec_one_shot_cmd(
+        code, logs = self._exec_one_shot_cmd(
             self._constants.disconnect_cmd,
-            timeout_in_s,
-            debug_option
+            **kwargs
         )
+
+        return PIACommandResult[PIACommandStatus, None](
+            PIACommandStatus.from_cli_exit_code(code),
+            None, logs
+        )
+    
+    def version(self) -> str:
+        """
+        Returns version information.
+        """
+
+        return self._exec_one_shot_cmd(
+            self._constants.version_cmd
+        )[1]

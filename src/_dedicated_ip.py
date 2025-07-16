@@ -2,6 +2,7 @@ from ._types import PIACommandResult, PIACommandStatus
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 class PIADedicatedIP():
     def __init__(self, pia):
@@ -12,7 +13,7 @@ class PIADedicatedIP():
         token: str | None = None,
         token_file: str | None = None,
         **kwargs
-    ) -> PIACommandResult[PIACommandStatus, None | Exception]:
+    ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         """
         To add, pass in a dedicated IP token with the `token`
         argument, or place it in a text file, by itself like 
@@ -45,11 +46,11 @@ class PIADedicatedIP():
             except Exception as e:
                 if (temp_file): temp_file.close()
 
-                return PIACommandResult(PIACommandStatus, Exception)(
+                return PIACommandResult[PIACommandStatus, Exception](
                     PIACommandStatus.TEMP_FILE_ERROR, e, None
                 )
         else:
-            return PIACommandResult[PIACommandStatus, None](
+            return PIACommandResult[PIACommandStatus, Exception](
                 PIACommandStatus.INVALID_ARGS, 
                 Exception('No token or token file provided!'), None
             )

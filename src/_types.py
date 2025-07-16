@@ -4,7 +4,7 @@ from typing import TypeVar, Generic
 # Generic Declarations
 
 S = TypeVar('S')
-D = TypeVar('D')
+D = TypeVar('D', covariant=True)
 
 # Types
 

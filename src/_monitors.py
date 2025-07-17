@@ -59,8 +59,7 @@ class PIAMonitors():
 
         self._observers[info_type].append(observer)
 
-        # TODO return initial value using get cmd
-        return True
+        return self._pia.get(info_type).data
     
     def _stop_monitor(self, info_type: PIAInformationType):
         process = self._monitors[info_type]

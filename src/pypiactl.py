@@ -13,8 +13,8 @@ import warnings
 
 # CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
 # TODO add login command
-# TODO add logout command
 # TODO add set command
+# TODO make helper function for basic one shot commands that return PIACommandResult[PIACommandStatus, None]
 class PIA():
     def __init__(self, config: PIAConfig=PIAConfig()):
         self._config = config
@@ -174,6 +174,20 @@ class PIA():
             value, logs
         )
     
+    def logout(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
+        """
+        Log out your PIA account on this computer.
+        """
+        code, logs = self._exec_one_shot_cmd(
+            self._constants.logout_cmd,
+            **kwargs
+        )
+
+        return PIACommandResult[PIACommandStatus, None](
+            PIACommandStatus.from_cli_exit_code(code),
+            None, logs
+        )
+
     def reset_settings(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Resets daemon settings to the defaults (ports/protocols/etc.)

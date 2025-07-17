@@ -14,7 +14,6 @@ import warnings
 # CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
 # TODO add login command
 # TODO add set command
-# TODO make helper function for basic one shot commands that return PIACommandResult[PIACommandStatus, None]
 class PIA():
     def __init__(self, config: PIAConfig=PIAConfig()):
         self._config = config
@@ -110,6 +109,16 @@ class PIA():
         
         return (result.returncode, result.stdout.strip())
     
+    def _exec_simple_cmd(self, cmd: list[str], **kwargs) -> PIACommandResult[PIACommandStatus, None]:
+        code, logs = self._exec_one_shot_cmd(
+            cmd, **kwargs
+        )
+
+        return PIACommandResult[PIACommandStatus, None](
+            PIACommandStatus.from_cli_exit_code(code),
+            None, logs
+        )
+
     def connect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Connects to the VPN, or reconnects to apply new settings. 
@@ -118,29 +127,13 @@ class PIA():
         (By default, the PIA daemon is inactive when the GUI client
         is not running.)
         """
-        code, logs = self._exec_one_shot_cmd(
-            self._constants.connect_cmd,
-            **kwargs
-        )
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code),
-            None, logs
-        )
+        return self._exec_simple_cmd(self._constants.connect_cmd, **kwargs)
     
     def disconnect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Disconnects from the VPN.
         """
-        code, logs = self._exec_one_shot_cmd(
-            self._constants.disconnect_cmd,
-            **kwargs
-        )
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code),
-            None, logs
-        )
+        return self._exec_simple_cmd(self._constants.disconnect_cmd, **kwargs)
     
     def get(self, info_type: PIAInformationType, **kwargs):
         """
@@ -178,30 +171,14 @@ class PIA():
         """
         Log out your PIA account on this computer.
         """
-        code, logs = self._exec_one_shot_cmd(
-            self._constants.logout_cmd,
-            **kwargs
-        )
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code),
-            None, logs
-        )
+        return self._exec_simple_cmd(self._constants.logout_cmd, **kwargs)
 
     def reset_settings(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Resets daemon settings to the defaults (ports/protocols/etc.)
         Client settings (themes/icons/layouts) can't be set with the CLI.
         """
-        code, logs = self._exec_one_shot_cmd(
-            self._constants.reset_settings_cmd,
-            **kwargs
-        )
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code),
-            None, logs
-        )
+        return self._exec_simple_cmd(self._constants.reset_settings_cmd, **kwargs)
 
     def version(self) -> str:
         """
@@ -210,4 +187,4 @@ class PIA():
 
         return self._exec_one_shot_cmd(
             self._constants.version_cmd
-        )[1]
+        )[1].strip()

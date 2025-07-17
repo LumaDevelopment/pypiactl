@@ -4,14 +4,14 @@ from ._config import PIAConfig
 from ._constants import PIAConstants
 from ._dedicated_ip import PIADedicatedIP
 from ._monitors import PIAMonitors
-from ._types import PIACommandResult, PIACommandStatus
+from ._types import PIACommandResult, PIACommandStatus, PIAInformationType
+from ._utils import parse
 
 # External Imports
 import subprocess
 import warnings
 
 # CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
-# TODO add get command
 # TODO add login command
 # TODO add logout command
 # TODO add monitor command
@@ -142,6 +142,38 @@ class PIA():
         return PIACommandResult[PIACommandStatus, None](
             PIACommandStatus.from_cli_exit_code(code),
             None, logs
+        )
+    
+    def get(self, info_type: PIAInformationType, **kwargs):
+        """
+        Get information from the PIA daemon.\n
+        Available types:\n
+        - `ALLOW_LAN` - Whether to allow LAN traffic (returns `bool`)
+        - `CONNECTION_STATE` - VPN connection state (returns `PIAConnectionState`)
+        - `DEBUG_LOGGING` - State of debug logging setting (returns `bool`)
+        - `PORT_FORWARD` - Forwarded port number if available, or the status of 
+          the request to forward a port (returns `int` or `PIAPortForwardStatus`)
+        - `PROTOCOL` - VPN connection protocol (returns `PIAProtocol`)
+        - `PUB_IP` - Current public IP address (returns `IPv4Address` or `None`)
+        - `REGION` - Currently selected region (or "auto") (returns `str`)
+        - `REGIONS` - List all available regions (returns `set[str]`)
+        - `REQUEST_PORT_FORWARD` - Whether a forwarded port will be requested on
+          the next connection attempt (returns `bool`)
+        - `VPN_IP` - Current VPN IP address (returns `IPv4Address` or `None`)
+        """
+        code, logs = self._exec_one_shot_cmd(
+            self._constants.get_cmd + [info_type.value],
+            **kwargs
+        )
+
+        value = parse(
+            logs.splitlines()[-1].strip(),
+            info_type
+        )
+
+        return PIACommandResult[PIACommandStatus, type(value)](
+            PIACommandStatus.from_cli_exit_code(code),
+            value, logs
         )
     
     def version(self) -> str:

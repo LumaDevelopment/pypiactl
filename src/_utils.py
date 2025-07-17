@@ -18,8 +18,8 @@ def to_ipv4(string: str) -> Optional[ipaddress.IPv4Address]:
     except Exception:
         return None
 
-def parse(raw_data: str, type: PIAInformationType):
-    match type:
+def parse(raw_data: str, info_type: PIAInformationType):
+    match info_type:
         case PIAInformationType.ALLOW_LAN | \
              PIAInformationType.DEBUG_LOGGING | \
              PIAInformationType.REQUEST_PORT_FORWARD:

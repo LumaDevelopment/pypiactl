@@ -1,23 +1,22 @@
 from ._types import PIAConnectionState, PIAInformationType, PIAPortForwardStatus, PIAProtocol
 
 import ipaddress
+from typing import Optional
 
 def string_to_bool(string: str) -> bool:
     return string == 'true'
 
-def is_integer(string: str) -> bool:
+def to_integer(string: str) -> Optional[int]:
     try:
-        int(string)
-        return True
+        return int(string)
     except Exception:
-        return False
+        return None
 
-def is_ipv4(string: str) -> bool:
+def to_ipv4(string: str) -> Optional[ipaddress.IPv4Address]:
     try:
-        ipaddress.IPv4Address(string)
-        return True
+        return ipaddress.IPv4Address(string)
     except Exception:
-        return False
+        return None
 
 def parse(raw_data: str, type: PIAInformationType):
     match type:
@@ -28,15 +27,16 @@ def parse(raw_data: str, type: PIAInformationType):
         case PIAInformationType.CONNECTION_STATE:
             return PIAConnectionState.from_value(raw_data)
         case PIAInformationType.PORT_FORWARD:
-            if is_integer(raw_data):
-                return int(raw_data)
+            port = to_integer(raw_data)
+            if port:
+                return port
             else:
                 return PIAPortForwardStatus.from_value(raw_data)
         case PIAInformationType.PROTOCOL:
             return PIAProtocol.from_value(raw_data)
         case PIAInformationType.PUB_IP | \
              PIAInformationType.VPN_IP:
-            return raw_data if is_ipv4(raw_data) else None
+            return to_ipv4(raw_data)
         case PIAInformationType.REGION:
             return raw_data
         case PIAInformationType.REGIONS:

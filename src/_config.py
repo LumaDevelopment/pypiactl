@@ -24,5 +24,5 @@ class PIAConfig():
 
         self.debug_option = debug_option
         """
-        Global option to print debug logs to stderr.
+        Global option to include debug information in command logs.
         """

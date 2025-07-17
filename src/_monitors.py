@@ -1,5 +1,5 @@
-from src._types import PIAInformationType
-from src._utils import parse
+from ._types import PIAInformationType
+from ._utils import parse
 
 from abc import ABC, abstractmethod
 import subprocess

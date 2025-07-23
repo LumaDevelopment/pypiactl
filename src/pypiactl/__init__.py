@@ -1,6 +1,5 @@
 """pypiactl - A wrapper for the Private Internet Access (PIA) command-line interface."""
 
-from .pypiactl import PIA
 from ._config import PIAConfig
 from ._types import (
     PIACommandResult,
@@ -10,8 +9,9 @@ from ._types import (
     PIAInformationType,
     PIAMonitorObserver,
     PIAPortForwardStatus,
-    PIAProtocol
+    PIAProtocol,
 )
+from .pypiactl import PIA
 
 __version__ = "0.1.0"
 __all__ = [
@@ -24,5 +24,5 @@ __all__ = [
     "PIAInformationType",
     "PIAMonitorObserver",
     "PIAPortForwardStatus",
-    "PIAProtocol"
+    "PIAProtocol",
 ]

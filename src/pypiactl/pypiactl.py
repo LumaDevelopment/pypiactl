@@ -1,22 +1,27 @@
-# Internal Imports
+import subprocess
+import warnings
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Optional
+
 from ._background import PIABackground
 from ._config import PIAConfig
 from ._constants import PIAConstants
 from ._dedicated_ip import PIADedicatedIP
 from ._monitors import PIAMonitors
-from ._types import PIACommandResult, PIACommandStatus, PIACredentials, PIAInformationType, PIAProtocol
+from ._types import (
+    PIACommandResult,
+    PIACommandStatus,
+    PIACredentials,
+    PIAInformationType,
+    PIAProtocol,
+)
 from ._utils import parse
 
-# External Imports
-from pathlib import Path
-import subprocess
-from tempfile import NamedTemporaryFile
-from typing import Optional
-import warnings
 
 # CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
-class PIA():
-    def __init__(self, config: PIAConfig=PIAConfig()):
+class PIA:
+    def __init__(self, config: PIAConfig = PIAConfig()):
         self._config = config
         self._constants = PIAConstants()
 
@@ -44,17 +49,16 @@ class PIA():
         When a change is received, the observer is updated.
         """
 
-    def _get_cmd_timeout(
-        self,
-        parameter_timeout: None | int
-    ) -> None | int:
+    def _get_cmd_timeout(self, parameter_timeout: None | int) -> None | int:
         """
         Determines if there will be a timeout flag for a
         command, and if there is, what the value will be.
         """
         if parameter_timeout:
             if parameter_timeout < 1:
-                warnings.warn("One-shot command timeout must be 1 or greater if not None! Ignoring!")
+                warnings.warn(
+                    "One-shot command timeout must be 1 or greater if not None! Ignoring!"
+                )
                 return None
             else:
                 return parameter_timeout
@@ -62,13 +66,10 @@ class PIA():
             return self._config.one_shot_timeout_in_s
         else:
             return None
-        
-    def _get_cmd_debug(
-        self,
-        parameter_debug: bool
-    ) -> bool:
+
+    def _get_cmd_debug(self, parameter_debug: bool) -> bool:
         """
-        Determines whether a command will include its 
+        Determines whether a command will include its
         debug logs in its returned output.
         """
         if parameter_debug:
@@ -79,12 +80,12 @@ class PIA():
             return False
 
     def _exec_one_shot_cmd(
-        self, 
-        cmd: list[str], 
-        timeout_in_s: None | int = None, 
-        debug_option: bool = False
+        self,
+        cmd: list[str],
+        timeout_in_s: None | int = None,
+        debug_option: bool = False,
     ) -> tuple[int, str]:
-        # Assemble full command from executable, 
+        # Assemble full command from executable,
         # options, and provided command.
         full_cmd = [self._config.executable_path]
 
@@ -97,46 +98,32 @@ class PIA():
         debug = self._get_cmd_debug(debug_option)
         if debug:
             full_cmd += [self._constants.debug_flag]
-        
+
         full_cmd += cmd
 
         # Execute it
         result = subprocess.run(
-            full_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
-        )
-        
-        return (result.returncode, result.stdout.strip())
-    
-    def _exec_simple_cmd(self, cmd: list[str], **kwargs) -> PIACommandResult[PIACommandStatus, None]:
-        code, logs = self._exec_one_shot_cmd(
-            cmd, **kwargs
+            full_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
         )
 
+        return (result.returncode, result.stdout.strip())
+
+    def _exec_simple_cmd(
+        self, cmd: list[str], **kwargs
+    ) -> PIACommandResult[PIACommandStatus, None]:
+        code, logs = self._exec_one_shot_cmd(cmd, **kwargs)
+
         return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code),
-            None, logs
+            PIACommandStatus.from_cli_exit_code(code), None, logs
         )
-    
+
     def _exec_temp_file_cmd(
         self,
         cmd: list[str],
         value: str | None = None,
         file: str | Path | None = None,
-        **kwargs
+        **kwargs,
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
-        temp_file = None
-
-        # Validate args
-        if not file and not value:
-            return PIACommandResult[PIACommandStatus, Exception](
-                PIACommandStatus.INVALID_ARGS,
-                Exception('Neither of the arguments were provided!'), 
-                None
-            )
-        
         temp_file_path = None
 
         try:
@@ -145,26 +132,31 @@ class PIA():
                 file_path = Path(file)
 
             # Handle temporary file creation
-            else:
+            elif value:
                 with NamedTemporaryFile(
-                    mode="w",
-                    encoding="utf-8",
-                    delete=False
+                    mode="w", encoding="utf-8", delete=False
                 ) as temp_file:
                     temp_file.write(value)
                     temp_file_path = Path(temp_file.name)
                     file_path = temp_file_path
-            
+
+            # Invalid args
+            else:
+                return PIACommandResult[PIACommandStatus, Exception](
+                    PIACommandStatus.INVALID_ARGS,
+                    Exception("Neither of the arguments were provided!"),
+                    None,
+                )
+
             # Execute the command
             code, logs = self._exec_one_shot_cmd(
-                cmd + [str(file_path.absolute())],
-                **kwargs
+                cmd + [str(file_path.absolute())], **kwargs
             )
 
             return PIACommandResult[PIACommandStatus, None](
                 PIACommandStatus.from_cli_exit_code(code), None, logs
             )
-        
+
         except Exception as e:
             # Determine appropriate error status
             if file:
@@ -172,10 +164,8 @@ class PIA():
             else:
                 status = PIACommandStatus.TEMP_FILE_ERROR
 
-            return PIACommandResult[PIACommandStatus, Exception](
-                status, e, None
-            )
-        
+            return PIACommandResult[PIACommandStatus, Exception](status, e, None)
+
         finally:
             # Clean up temporary file if it was created
             if temp_file_path:
@@ -186,20 +176,20 @@ class PIA():
 
     def connect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
-        Connects to the VPN, or reconnects to apply new settings. 
-        To use this command, the PIA GUI client must be running, 
+        Connects to the VPN, or reconnects to apply new settings.
+        To use this command, the PIA GUI client must be running,
         or background mode must be enabled.
         (By default, the PIA daemon is inactive when the GUI client
         is not running.)
         """
         return self._exec_simple_cmd(self._constants.connect_cmd, **kwargs)
-    
+
     def disconnect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Disconnects from the VPN.
         """
         return self._exec_simple_cmd(self._constants.disconnect_cmd, **kwargs)
-    
+
     def get(self, info_type: PIAInformationType, **kwargs):
         """
         Get information from the PIA daemon.\n
@@ -207,7 +197,7 @@ class PIA():
         - `ALLOW_LAN` - Whether to allow LAN traffic (returns `bool`)
         - `CONNECTION_STATE` - VPN connection state (returns `PIAConnectionState`)
         - `DEBUG_LOGGING` - State of debug logging setting (returns `bool`)
-        - `PORT_FORWARD` - Forwarded port number if available, or the status of 
+        - `PORT_FORWARD` - Forwarded port number if available, or the status of
           the request to forward a port (returns `int` or `PIAPortForwardStatus`)
         - `PROTOCOL` - VPN connection protocol (returns `PIAProtocol`)
         - `PUB_IP` - Current public IP address (returns `IPv4Address` or `None`)
@@ -218,46 +208,37 @@ class PIA():
         - `VPN_IP` - Current VPN IP address (returns `IPv4Address` or `None`)
         """
         code, logs = self._exec_one_shot_cmd(
-            self._constants.get_cmd + [info_type.value],
-            **kwargs
+            self._constants.get_cmd + [info_type.value], **kwargs
         )
 
-        value = parse(
-            logs.splitlines()[-1].strip(),
-            info_type
-        )
+        value = parse(logs.splitlines()[-1].strip(), info_type)
 
         return PIACommandResult[PIACommandStatus, type(value)](
-            PIACommandStatus.from_cli_exit_code(code),
-            value, logs
+            PIACommandStatus.from_cli_exit_code(code), value, logs
         )
-    
+
     def login(
-        self, 
+        self,
         credentials: PIACredentials | None = None,
         credentials_file: str | Path | None = None,
-        **kwargs
+        **kwargs,
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         """
-        Log in to your PIA account. To login, pass in your credentials 
-        with the `credentials` argument, or place it in a text file 
+        Log in to your PIA account. To login, pass in your credentials
+        with the `credentials` argument, or place it in a text file
         like so:\n
         \tp0000000
         \t(yourpassword)
         and pass in its path with the `credentials_file` argument.
         """
         credentials_str = (
-            f"{credentials.username}\n{credentials.password}\n"
-            if credentials else None
+            f"{credentials.username}\n{credentials.password}\n" if credentials else None
         )
 
         return self._exec_temp_file_cmd(
-            self._constants.login_cmd,
-            credentials_str,
-            credentials_file,
-            **kwargs
+            self._constants.login_cmd, credentials_str, credentials_file, **kwargs
         )
-    
+
     def logout(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
         Log out your PIA account on this computer.
@@ -270,12 +251,9 @@ class PIA():
         Client settings (themes/icons/layouts) can't be set with the CLI.
         """
         return self._exec_simple_cmd(self._constants.reset_settings_cmd, **kwargs)
-    
+
     def set(
-        self, 
-        info_type: PIAInformationType,
-        value: bool | PIAProtocol | str,
-        **kwargs
+        self, info_type: PIAInformationType, value: bool | PIAProtocol | str, **kwargs
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         """
         Change settings in the PIA daemon.
@@ -285,7 +263,7 @@ class PIA():
         - debuglogging - Enable or disable debug logging (pass `bool`)
         - protocol - Select a VPN protocol (pass `PIAProtocol`)
         - region - Select a region (or "auto") (pass `str`)
-        - requestportforward - Whether to request a forwarded port on 
+        - requestportforward - Whether to request a forwarded port on
         the next connection attempt (pass `bool`)
         """
         # Define what types are supported
@@ -294,7 +272,7 @@ class PIA():
             PIAInformationType.DEBUG_LOGGING,
             PIAInformationType.PROTOCOL,
             PIAInformationType.REGION,
-            PIAInformationType.REQUEST_PORT_FORWARD
+            PIAInformationType.REQUEST_PORT_FORWARD,
         }
 
         # Verify setting type is supported
@@ -302,9 +280,9 @@ class PIA():
             return PIACommandResult[PIACommandStatus, Exception](
                 PIACommandStatus.INVALID_ARGS,
                 Exception(f"Cannot set value of {info_type}."),
-                None
+                None,
             )
-        
+
         # Convert value to string for CLI
         if isinstance(value, bool):
             value_str = "true" if value else "false"
@@ -323,6 +301,4 @@ class PIA():
         Returns version information.
         """
 
-        return self._exec_one_shot_cmd(
-            self._constants.version_cmd
-        )[1].strip()
+        return self._exec_one_shot_cmd(self._constants.version_cmd)[1].strip()

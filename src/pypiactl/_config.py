@@ -1,11 +1,12 @@
 # Library configuration object
 
-class PIAConfig():
+
+class PIAConfig:
     def __init__(
         self,
-        executable_path: str = 'piactl',
+        executable_path: str = "piactl",
         one_shot_timeout_in_s: None | int = None,
-        debug_option: bool = False
+        debug_option: bool = False,
     ):
         self.executable_path = executable_path
         """
@@ -14,7 +15,7 @@ class PIAConfig():
         """
 
         # Sanity check
-        if (one_shot_timeout_in_s and one_shot_timeout_in_s < 1):
+        if one_shot_timeout_in_s and one_shot_timeout_in_s < 1:
             raise RuntimeError("One shot timeout must be 1 or greater if not None!")
 
         self.one_shot_timeout_in_s = one_shot_timeout_in_s

@@ -4,7 +4,7 @@ from ._config import PIAConfig
 from ._constants import PIAConstants
 from ._dedicated_ip import PIADedicatedIP
 from ._monitors import PIAMonitors
-from ._types import PIACommandResult, PIACommandStatus, PIACredentials, PIAInformationType
+from ._types import PIACommandResult, PIACommandStatus, PIACredentials, PIAInformationType, PIAProtocol
 from ._utils import parse
 
 # External Imports
@@ -129,45 +129,60 @@ class PIA():
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         temp_file = None
 
-        if (file):
-            try:
+        # Validate args
+        if not file and not value:
+            return PIACommandResult[PIACommandStatus, Exception](
+                PIACommandStatus.INVALID_ARGS,
+                Exception('Neither of the arguments were provided!'), 
+                None
+            )
+        
+        temp_file_path = None
+
+        try:
+            # Handle existing file
+            if file:
                 file_path = Path(file)
-            except Exception as e:
-                return PIACommandResult[PIACommandStatus, Exception](
-                    PIACommandStatus.INVALID_ARGS, e, None
-                )
-        elif (value):
-            try:
-                temp_file = NamedTemporaryFile(
+
+            # Handle temporary file creation
+            else:
+                with NamedTemporaryFile(
                     mode="w",
                     encoding="utf-8",
                     delete=False
-                )
-                temp_file.write(value)
-                file_path = Path(temp_file.name)
-            except Exception as e:
-                if (temp_file): temp_file.close()
+                ) as temp_file:
+                    temp_file.write(value)
+                    temp_file_path = Path(temp_file.name)
+                    file_path = temp_file_path
+            
+            # Execute the command
+            code, logs = self._exec_one_shot_cmd(
+                cmd + [str(file_path.absolute())],
+                **kwargs
+            )
 
-                return PIACommandResult[PIACommandStatus, Exception](
-                    PIACommandStatus.TEMP_FILE_ERROR, e, None
-                )
-        else:
-            return PIACommandResult[PIACommandStatus, Exception](
-                PIACommandStatus.INVALID_ARGS,
-                Exception('Neither of the arguments were provided!'), None
+            return PIACommandResult[PIACommandStatus, None](
+                PIACommandStatus.from_cli_exit_code(code), None, logs
             )
         
-        code, logs = self._exec_one_shot_cmd(
-            cmd + [str(file_path.absolute())],
-            **kwargs
-        )
+        except Exception as e:
+            # Determine appropriate error status
+            if file:
+                status = PIACommandStatus.INVALID_ARGS
+            else:
+                status = PIACommandStatus.TEMP_FILE_ERROR
 
-        if (temp_file):
-            temp_file.close()
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code), None, logs
-        )
+            return PIACommandResult[PIACommandStatus, Exception](
+                status, e, None
+            )
+        
+        finally:
+            # Clean up temporary file if it was created
+            if temp_file_path:
+                try:
+                    temp_file_path.unlink()
+                except Exception:
+                    pass
 
     def connect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
@@ -255,6 +270,53 @@ class PIA():
         Client settings (themes/icons/layouts) can't be set with the CLI.
         """
         return self._exec_simple_cmd(self._constants.reset_settings_cmd, **kwargs)
+    
+    def set(
+        self, 
+        info_type: PIAInformationType,
+        value: bool | PIAProtocol | str,
+        **kwargs
+    ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
+        """
+        Change settings in the PIA daemon.
+
+        Available types:
+        - allowlan - Whether to allow LAN traffic (pass `bool`)
+        - debuglogging - Enable or disable debug logging (pass `bool`)
+        - protocol - Select a VPN protocol (pass `PIAProtocol`)
+        - region - Select a region (or "auto") (pass `str`)
+        - requestportforward - Whether to request a forwarded port on 
+        the next connection attempt (pass `bool`)
+        """
+        # Define what types are supported
+        settable_types = {
+            PIAInformationType.ALLOW_LAN,
+            PIAInformationType.DEBUG_LOGGING,
+            PIAInformationType.PROTOCOL,
+            PIAInformationType.REGION,
+            PIAInformationType.REQUEST_PORT_FORWARD
+        }
+
+        # Verify setting type is supported
+        if info_type not in settable_types:
+            return PIACommandResult[PIACommandStatus, Exception](
+                PIACommandStatus.INVALID_ARGS,
+                Exception(f"Cannot set value of {info_type}."),
+                None
+            )
+        
+        # Convert value to string for CLI
+        if isinstance(value, bool):
+            value_str = "true" if value else "false"
+        elif isinstance(value, PIAProtocol):
+            value_str = value.value
+        else:
+            value_str = str(value)
+
+        # Build the command
+        cmd = self._constants.set_cmd + [info_type.value, value_str]
+
+        return self._exec_simple_cmd(cmd, **kwargs)
 
     def version(self) -> str:
         """

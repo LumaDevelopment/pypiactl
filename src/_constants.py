@@ -16,4 +16,5 @@ class PIAConstants():
         self.logout_cmd: list[str] = ['logout']
         self.monitor_cmd: list[str] = ['monitor']
         self.reset_settings_cmd: list[str] = ['resetsettings']
+        self.set_cmd: list[str] = ['set']
         self.version_cmd: list[str] = ['-v']

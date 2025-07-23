@@ -71,6 +71,11 @@ class PIAConnectionState(Enum):
         return cls._value2member_map_.get(
             value, PIAConnectionState.UNKNOWN
         ) # type: ignore
+    
+class PIACredentials():
+    def __init__(self, username: str, password: str) -> None:
+        self.username: str = username
+        self.password: str = password
 
 class PIAInformationType(Enum):
     ALLOW_LAN = 'allowlan'

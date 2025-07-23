@@ -4,16 +4,17 @@ from ._config import PIAConfig
 from ._constants import PIAConstants
 from ._dedicated_ip import PIADedicatedIP
 from ._monitors import PIAMonitors
-from ._types import PIACommandResult, PIACommandStatus, PIAInformationType
+from ._types import PIACommandResult, PIACommandStatus, PIACredentials, PIAInformationType
 from ._utils import parse
 
 # External Imports
+from pathlib import Path
 import subprocess
+from tempfile import NamedTemporaryFile
+from typing import Optional
 import warnings
 
 # CLI SRC: https://github.com/pia-foss/desktop/tree/master/cli/src
-# TODO add login command
-# TODO add set command
 class PIA():
     def __init__(self, config: PIAConfig=PIAConfig()):
         self._config = config
@@ -118,6 +119,55 @@ class PIA():
             PIACommandStatus.from_cli_exit_code(code),
             None, logs
         )
+    
+    def _exec_temp_file_cmd(
+        self,
+        cmd: list[str],
+        value: str | None = None,
+        file: str | Path | None = None,
+        **kwargs
+    ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
+        temp_file = None
+
+        if (file):
+            try:
+                file_path = Path(file)
+            except Exception as e:
+                return PIACommandResult[PIACommandStatus, Exception](
+                    PIACommandStatus.INVALID_ARGS, e, None
+                )
+        elif (value):
+            try:
+                temp_file = NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    delete=False
+                )
+                temp_file.write(value)
+                file_path = Path(temp_file.name)
+            except Exception as e:
+                if (temp_file): temp_file.close()
+
+                return PIACommandResult[PIACommandStatus, Exception](
+                    PIACommandStatus.TEMP_FILE_ERROR, e, None
+                )
+        else:
+            return PIACommandResult[PIACommandStatus, Exception](
+                PIACommandStatus.INVALID_ARGS,
+                Exception('Neither of the arguments were provided!'), None
+            )
+        
+        code, logs = self._exec_one_shot_cmd(
+            cmd + [str(file_path.absolute())],
+            **kwargs
+        )
+
+        if (temp_file):
+            temp_file.close()
+
+        return PIACommandResult[PIACommandStatus, None](
+            PIACommandStatus.from_cli_exit_code(code), None, logs
+        )
 
     def connect(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:
         """
@@ -165,6 +215,32 @@ class PIA():
         return PIACommandResult[PIACommandStatus, type(value)](
             PIACommandStatus.from_cli_exit_code(code),
             value, logs
+        )
+    
+    def login(
+        self, 
+        credentials: PIACredentials | None = None,
+        credentials_file: str | Path | None = None,
+        **kwargs
+    ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
+        """
+        Log in to your PIA account. To login, pass in your credentials 
+        with the `credentials` argument, or place it in a text file 
+        like so:\n
+        \tp0000000
+        \t(yourpassword)
+        and pass in its path with the `credentials_file` argument.
+        """
+        credentials_str = (
+            f"{credentials.username}\n{credentials.password}\n"
+            if credentials else None
+        )
+
+        return self._exec_temp_file_cmd(
+            self._constants.login_cmd,
+            credentials_str,
+            credentials_file,
+            **kwargs
         )
     
     def logout(self, **kwargs) -> PIACommandResult[PIACommandStatus, None]:

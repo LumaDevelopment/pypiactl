@@ -1,7 +1,6 @@
 from ._types import PIACommandResult, PIACommandStatus
 
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
 class PIADedicatedIP():
@@ -11,7 +10,7 @@ class PIADedicatedIP():
     def add(
         self,
         token: str | None = None,
-        token_file: str | None = None,
+        token_file: str | Path | None = None,
         **kwargs
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         """
@@ -25,60 +24,23 @@ class PIADedicatedIP():
         Command status may be `INVALID_ARGS`, `TEMP_FILE_ERROR`,
         or `SUCCESS`.
         """
-        temp_file = None
-
-        if (token_file):
-            try:
-                token_file_path = Path(token_file)
-            except Exception as e:
-                return PIACommandResult[PIACommandStatus, Exception](
-                    PIACommandStatus.INVALID_ARGS, e, None
-                )
-        elif (token):
-            try:
-                temp_file = NamedTemporaryFile(
-                    mode="w",
-                    encoding='utf-8',
-                    delete=False
-                )
-                temp_file.write(token)
-                token_file_path = Path(temp_file.name)
-            except Exception as e:
-                if (temp_file): temp_file.close()
-
-                return PIACommandResult[PIACommandStatus, Exception](
-                    PIACommandStatus.TEMP_FILE_ERROR, e, None
-                )
-        else:
-            return PIACommandResult[PIACommandStatus, Exception](
-                PIACommandStatus.INVALID_ARGS, 
-                Exception('No token or token file provided!'), None
-            )
-        
-        code, logs = self._pia._exec_one_shot_cmd(
-            self._pia._constants.dedicatedip_add_cmd + [token_file_path.absolute()],
+        return self._pia._exec_temp_file_cmd(
+            self._pia._constants.dedicatedip_add_cmd,
+            token,
+            token_file,
             **kwargs
-        )
-
-        if (temp_file):
-            temp_file.close()
-
-        return PIACommandResult[PIACommandStatus, None](
-            PIACommandStatus.from_cli_exit_code(code), None, logs
         )
     
     def remove(
         self,
         region_id: str,
         **kwargs
-    ) -> str:
+    ) -> PIACommandResult[PIACommandStatus, None]:
         """
         To remove, specify the dedicated IP region ID, such as 
         `dedicated-sweden-000.000.000.000`.
         """
-        # TODO verify region
-        # TODO return PIACommandResult
-        return self._pia._exec_one_shot_cmd(
+        return self._pia._exec_simple_cmd(
             self._pia._constants.dedicatedip_remove_cmd + [region_id],
             **kwargs
-        )[1]
+        )

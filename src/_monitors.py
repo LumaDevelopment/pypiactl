@@ -11,7 +11,7 @@ class PIAMonitors():
         self._monitors: dict[PIAInformationType, subprocess.Popen[str]] = {}
         self._observers: dict[PIAInformationType, list[PIAMonitorObserver]] = {}
 
-    def _start_monitor(self, info_type: PIAInformationType) -> None:
+    def _start_monitor(self, info_type: PIAInformationType):
         cmd = [self._pia._config.executable_path] + \
               self._pia._constants.monitor_cmd + \
               [info_type.value]
@@ -42,7 +42,8 @@ class PIAMonitors():
         the specified information changes.
 
         Map from `PIAInformationType` to the type of the value that 
-        the observer will be updated with:
+        the observer will be updated with (see `PIA`'s `get` method
+        for more information):
         - `ALLOW_LAN`, `DEBUG_LOGGING`, `REQUEST_PORT_FORWARD` ->
         `bool`
         - `CONNECTION_STATE` -> `PIAConnectionState`

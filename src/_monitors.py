@@ -1,19 +1,8 @@
-from ._types import PIAInformationType
+from ._types import PIAInformationType, PIAMonitorObserver
 from ._utils import parse
 
-from abc import ABC, abstractmethod
 import subprocess
 import threading
-from typing import TypeVar, Generic
-
-T = TypeVar('T')
-
-class PIAMonitorObserver(ABC, Generic[T]):
-    @abstractmethod
-    def update(self, value: T) -> None:
-        pass
-
-# TODO add comments to methods
 
 class PIAMonitors():
     def __init__(self, pia):
@@ -48,6 +37,25 @@ class PIAMonitors():
         threading.Thread(target=monitor_loop, daemon=True).start()
 
     def attach(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
+        """
+        Register the given observer to receive updates whenever 
+        the specified information changes.
+
+        Map from `PIAInformationType` to the type of the value that 
+        the observer will be updated with:
+        - `ALLOW_LAN`, `DEBUG_LOGGING`, `REQUEST_PORT_FORWARD` ->
+        `bool`
+        - `CONNECTION_STATE` -> `PIAConnectionState`
+        - `PORT_FORWARD` -> `int` or `PIAPortForwardStatus`
+        - `PROTOCOL` -> `PIAProtocol`
+        - `PUB_IP`, `VPN_IP` -> `ipaddress.IPv4Address` or `None`
+        - `REGION` -> `str`
+
+        Returns the current value for the given information type.
+        Returns `None` if the given information type is `REGIONS`, 
+        as `REGIONS` is not monitorable.
+        """
+
         if (info_type is PIAInformationType.REGIONS):
             return None
 
@@ -69,6 +77,12 @@ class PIAMonitors():
             del self._monitors[info_type]
 
     def detatch(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
+        """
+        Unregisters the given observer for the given information type, 
+        meaning it will no longer be updated when the specified 
+        information changes.
+        """
+
         if (info_type not in self._observers):
             return
         

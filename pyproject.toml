@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pypiactl"
-version = "0.1.0"
+version = "3.6.1"
 description = "A wrapper for the Private Internet Access (PIA) command-line interface."
 readme = "README.md"
 license = {file = "LICENSE"}

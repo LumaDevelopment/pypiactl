@@ -1,4 +1,4 @@
-"""pypiactl - A wrapper for the Private Internet Access (PIA) command-line interface."""
+"""pypiactl - A wrapper for the command-line interface to the Private Internet Access (PIA) client."""
 
 from ._config import PIAConfig
 from ._types import (

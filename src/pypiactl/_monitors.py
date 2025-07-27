@@ -77,7 +77,7 @@ class PIAMonitors:
             process.wait()
             del self._monitors[info_type]
 
-    def detatch(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
+    def detach(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
         """
         Unregisters the given observer for the given information type,
         meaning it will no longer be updated when the specified

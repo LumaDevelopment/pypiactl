@@ -318,5 +318,6 @@ Any and all contributions are welcome! Please begin by [opening a new issue](htt
 
 `pypiactl` is licensed under the [GNU General Public License v2](LICENSE).
 
-# TODO set me up to get an email whenever the PIA CLI is updated
+# TODO write tests
+# TODO remember to run `isort` and `black` before publish
 # TODO publish using uv docs

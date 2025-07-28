@@ -2,7 +2,7 @@ import subprocess
 import warnings
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Optional
+from typing import List, Optional
 
 from ._background import PIABackground
 from ._config import PIAConfig
@@ -81,7 +81,7 @@ class PIA:
 
     def _exec_one_shot_cmd(
         self,
-        cmd: list[str],
+        cmd: List[str],
         timeout_in_s: None | int = None,
         debug_option: bool = False,
     ) -> tuple[int, str]:
@@ -109,7 +109,7 @@ class PIA:
         return (result.returncode, result.stdout.strip())
 
     def _exec_simple_cmd(
-        self, cmd: list[str], **kwargs
+        self, cmd: List[str], **kwargs
     ) -> PIACommandResult[PIACommandStatus, None]:
         code, logs = self._exec_one_shot_cmd(cmd, **kwargs)
 
@@ -119,7 +119,7 @@ class PIA:
 
     def _exec_temp_file_cmd(
         self,
-        cmd: list[str],
+        cmd: List[str],
         value: str | None = None,
         file: str | Path | None = None,
         **kwargs,
@@ -149,10 +149,7 @@ class PIA:
                 )
 
             # Execute the command
-            return self._exec_simple_cmd(
-                cmd + [str(file_path.absolute())],
-                **kwargs
-            )
+            return self._exec_simple_cmd(cmd + [str(file_path.absolute())], **kwargs)
 
         except Exception as e:
             # Determine appropriate error status

@@ -7,7 +7,6 @@ from ._types import (
     PIAConnectionState,
     PIACredentials,
     PIAInformationType,
-    PIAMonitorObserver,
     PIAPortForwardStatus,
     PIAProtocol,
 )
@@ -22,7 +21,6 @@ __all__ = [
     "PIAConnectionState",
     "PIACredentials",
     "PIAInformationType",
-    "PIAMonitorObserver",
     "PIAPortForwardStatus",
     "PIAProtocol",
 ]

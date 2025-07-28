@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Generic, TypeVar
 
@@ -88,12 +87,6 @@ class PIAInformationType(Enum):
     REGIONS = "regions"
     REQUEST_PORT_FORWARD = "requestportforward"
     VPN_IP = "vpnip"
-
-
-class PIAMonitorObserver(ABC, Generic[T]):
-    @abstractmethod
-    def update(self, value: T) -> None:
-        pass
 
 
 class PIAPortForwardStatus(Enum):

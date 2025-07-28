@@ -1,7 +1,10 @@
 import subprocess
 import threading
+import weakref
+from collections import defaultdict
+from typing import Any, Callable, Dict
 
-from ._types import PIAInformationType, PIAMonitorObserver
+from ._types import PIAInformationType
 from ._utils import parse
 
 
@@ -9,8 +12,12 @@ class PIAMonitors:
     def __init__(self, pia):
         self._pia = pia
 
-        self._monitors: dict[PIAInformationType, subprocess.Popen[str]] = {}
-        self._observers: dict[PIAInformationType, list[PIAMonitorObserver]] = {}
+        self._monitors: Dict[PIAInformationType, subprocess.Popen[str]] = {}
+        self._observers: Dict[
+            PIAInformationType, weakref.WeakSet[Callable[[Any], None]]
+        ] = defaultdict(weakref.WeakSet)
+
+        self._lock = threading.RLock()
 
     def _start_monitor(self, info_type: PIAInformationType):
         cmd = (
@@ -31,12 +38,24 @@ class PIAMonitors:
 
             for line in process.stdout:
                 value = parse(line.strip(), info_type)
-                for observer in self._observers.get(info_type, []):
-                    observer.update(value)
+
+                # Copy observers with lock acquired
+                with self._lock:
+                    observers = list(self._observers[info_type])
+
+                for observer in observers:
+                    observer(value)
 
         threading.Thread(target=monitor_loop, daemon=True).start()
 
-    def attach(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
+    def attach(
+        self,
+        info_type: PIAInformationType,
+        observer: Callable[
+            [Any],
+            None,
+        ],
+    ):
         """
         Register the given observer to receive updates whenever
         the specified information changes.
@@ -60,37 +79,37 @@ class PIAMonitors:
         if info_type is PIAInformationType.REGIONS:
             return None
 
-        if info_type not in self._observers:
-            self._observers[info_type] = []
+        with self._lock:
+            if info_type not in self._monitors:
+                self._start_monitor(info_type)
 
-        if info_type not in self._monitors:
-            self._start_monitor(info_type)
-
-        self._observers[info_type].append(observer)
+            self._observers[info_type].add(observer)
 
         return self._pia.get(info_type).data
 
     def _stop_monitor(self, info_type: PIAInformationType):
-        process = self._monitors[info_type]
-        if process:
+        if process := self._monitors.get(info_type):
             process.terminate()
             process.wait()
             del self._monitors[info_type]
 
-    def detach(self, info_type: PIAInformationType, observer: PIAMonitorObserver):
+    def detach(
+        self,
+        info_type: PIAInformationType,
+        observer: Callable[
+            [Any],
+            None,
+        ],
+    ):
         """
         Unregisters the given observer for the given information type,
         meaning it will no longer be updated when the specified
         information changes.
         """
 
-        if info_type not in self._observers:
-            return
+        with self._lock:
+            self._observers[info_type].discard(observer)
 
-        try:
-            self._observers[info_type].remove(observer)
-        except ValueError:
-            return  # no big deal
-
-        if len(self._observers[info_type]) == 0:
-            self._stop_monitor(info_type)
+            # Clean up monitor if no observers left
+            if not self._observers[info_type] and info_type in self._monitors:
+                self._stop_monitor(info_type)

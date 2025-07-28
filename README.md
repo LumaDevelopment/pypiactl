@@ -292,9 +292,70 @@ Once the user is able to establish connections, they may wish to retrieve inform
 
 ### Retrieving information
 
+Any [`PIAInformationType`](#piainformationtype-values) value can be retrieved using the library like so:
+
+```python
+from pypiactl import PIA, PIAInformationType
+
+pia = PIA()
+
+print(pia.get(PIAInformationType.CONNECTION_STATE))
+```
+
+The type of the `data` attribute of the [`PIACommandResult`](#piacommandresult-attributes) instance that `PIA.get()` returns depends on the given [`PIAInformationType`](#piainformationtype-values).
+
 ### Monitoring information
 
+Any [`PIAInformationType`](#piainformationtype-values) (except for `PIAInformationType.REGIONS`) can be monitored using the libary like so:
+
+```python
+import ipaddress
+import time
+
+from pypiactl import PIA, PIAInformationType
+
+pia = PIA()
+
+def observer(ip: ipaddress.IPv4Address):
+    print(f"Public IP of VPN: {ip}")
+
+pia.monitor.attach(PIAInformationType.VPN_IP, observer)
+
+pia.connect()
+
+# Within this time, observer() will be called with VPN's IP
+time.sleep(5)
+
+pia.disconnect()
+
+# Within this time, observer() should be called with `None`
+
+pia.monitor.detach(PIAInformationType.VPN_IP, observer)
+```
+
+Similarly to [retrieving information](#retrieving-information), the type of the value that the function passed into `PIA.monitor.attach()` is called with depends on the given [`PIAInformationType`](#piainformationtype-values).
+
 ### Changing settings
+
+Any of the following [`PIAInformationType`](#piainformationtype-values) values can be updated:
+
+- `PIAInformationType.ALLOW_LAN`
+- `PIAInformationType.DEBUG_LOGGING`
+- `PIAInformationType.PROTOCOL`
+- `PIAInformationType.REGION`
+- `PIAInformationType.REQUEST_PORT_FORWARD`
+
+Like so:
+
+```python
+from pypiactl import PIA, PIAInformationType
+
+pia = PIA()
+
+pia.set(PIAInformationType.REGION, "jp-streaming-optimized")
+```
+
+The correct type for the given value depends on the [`PIAInformationType`](#piainformationtype-values) being updated.
 
 ### Resetting settings
 
@@ -309,6 +370,44 @@ pia.reset_settings()
 ```
 
 ### Dedicated IP management
+
+Finally, the user can manager dedicated IPs using the library. The user can provide their token through two different means.
+
+The first is by writing their token in a text file like so:
+
+```
+DIP20000000000000000000000000000
+```
+
+and passing in its path like so:
+
+```python
+from pypiactl import PIA
+
+pia = PIA()
+
+pia.dedicated_ip.add(token_file="dedicated_ip_token.txt")
+```
+
+The second is by directly passing the token into `PIA` like so:
+
+```python
+from pypiactl import PIA
+
+pia = PIA()
+
+pia.dedicated_ip.add(token="DIP20000000000000000000000000000")
+```
+
+Alternatively, the user can remove a dedicated IP like so:
+
+```python
+from pypiactl import PIA
+
+pia = PIA()
+
+pia.dedicated_ip.remove("dedicated-sweden-000.000.000.000")
+```
 
 ## Contributing
 

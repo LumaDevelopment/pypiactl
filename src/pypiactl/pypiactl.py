@@ -149,12 +149,9 @@ class PIA:
                 )
 
             # Execute the command
-            code, logs = self._exec_one_shot_cmd(
-                cmd + [str(file_path.absolute())], **kwargs
-            )
-
-            return PIACommandResult[PIACommandStatus, None](
-                PIACommandStatus.from_cli_exit_code(code), None, logs
+            return self._exec_simple_cmd(
+                cmd + [str(file_path.absolute())],
+                **kwargs
             )
 
         except Exception as e:

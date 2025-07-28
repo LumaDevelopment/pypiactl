@@ -371,7 +371,7 @@ pia.reset_settings()
 
 ### Dedicated IP management
 
-Finally, the user can manager dedicated IPs using the library. The user can provide their token through two different means.
+Finally, the user can manage dedicated IPs using the library. The user can provide their token through two different means.
 
 The first is by writing their token in a text file like so:
 

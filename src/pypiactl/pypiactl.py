@@ -205,7 +205,12 @@ class PIA:
             self._constants.get_cmd + [info_type.value], **kwargs
         )
 
-        value = parse(logs.splitlines()[-1].strip(), info_type)
+        parse_arg = (
+            logs.splitlines()[-1].strip()
+            if info_type is not PIAInformationType.REGIONS
+            else logs
+        )
+        value = parse(parse_arg, info_type)
 
         return PIACommandResult[PIACommandStatus, type(value)](
             PIACommandStatus.from_cli_exit_code(code), value, logs

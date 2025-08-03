@@ -32,6 +32,17 @@ dev = [
     "isort",
     "mypy",
 ]
+test = [
+    "pytest >= 7.0",
+    "pytest-cov",
+    "pytest-mock",
+]
+
+[tool.black]
+target-version = ['py37']
+
+[tool.isort]
+profile = "black"
 
 [project.urls]
 Homepage = "https://github.com/LumaDevelopment/pypiactl"

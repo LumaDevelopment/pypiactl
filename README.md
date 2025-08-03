@@ -416,7 +416,3 @@ Any and all contributions are welcome! Please begin by [opening a new issue](htt
 ## License
 
 `pypiactl` is licensed under the [GNU General Public License v2](LICENSE).
-
-# TODO write tests
-# TODO remember to run `isort` and `black` before publish
-# TODO publish using uv docs

@@ -204,7 +204,7 @@ class PIA:
 
         # Debug option breaks regions retrieval
         if info_type is PIAInformationType.REGIONS:
-            kwargs['debug_option'] = False
+            kwargs["debug_option"] = False
 
         code, logs = self._exec_one_shot_cmd(
             self._constants.get_cmd + [info_type.value], **kwargs

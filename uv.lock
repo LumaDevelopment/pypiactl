@@ -848,7 +848,7 @@ wheels = [
 
 [[package]]
 name = "pypiactl"
-version = "3.6.1"
+version = "3.6.1.1"
 source = { editable = "." }
 
 [package.optional-dependencies]

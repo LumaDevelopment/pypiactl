@@ -72,11 +72,14 @@ class PIAMonitors:
         - `REGION` -> `str`
 
         Returns the current value for the given information type.
-        Returns `None` if the given information type is `REGIONS`,
-        as `REGIONS` is not monitorable.
+        Returns `None` if the given information type is `REGIONS`
+        or `WIREGUARD_PING_TIMEOUT`, as these values are not monitorable.
         """
 
-        if info_type is PIAInformationType.REGIONS:
+        if info_type in (
+            PIAInformationType.REGIONS,
+            PIAInformationType.WIREGUARD_PING_TIMEOUT,
+        ):
             return None
 
         with self._lock:

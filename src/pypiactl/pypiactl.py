@@ -257,7 +257,10 @@ class PIA:
         return self._exec_simple_cmd(self._constants.reset_settings_cmd, **kwargs)
 
     def set(
-        self, info_type: PIAInformationType, value: bool | PIAProtocol | str, **kwargs
+        self,
+        info_type: PIAInformationType,
+        value: bool | int | PIAProtocol | str,
+        **kwargs,
     ) -> PIACommandResult[PIACommandStatus, Optional[Exception]]:
         """
         Change settings in the PIA daemon.
@@ -269,6 +272,8 @@ class PIA:
         - region - Select a region (or "auto") (pass `str`)
         - requestportforward - Whether to request a forwarded port on
         the next connection attempt (pass `bool`)
+        - wireguardpingtimeout - WireGuard ping timeout in seconds
+        (pass `int`; allowed values: 15, 30, 60, 120)
         """
         # Define what types are supported
         settable_types = {
@@ -277,6 +282,7 @@ class PIA:
             PIAInformationType.PROTOCOL,
             PIAInformationType.REGION,
             PIAInformationType.REQUEST_PORT_FORWARD,
+            PIAInformationType.WIREGUARD_PING_TIMEOUT,
         }
 
         # Verify setting type is supported
@@ -286,6 +292,17 @@ class PIA:
                 Exception(f"Cannot set value of {info_type}."),
                 None,
             )
+
+        if info_type is PIAInformationType.WIREGUARD_PING_TIMEOUT:
+            allowed_values = {15, 30, 60, 120}
+            if not isinstance(value, int) or value not in allowed_values:
+                return PIACommandResult[PIACommandStatus, Exception](
+                    PIACommandStatus.INVALID_ARGS,
+                    Exception(
+                        f"{PIAInformationType.WIREGUARD_PING_TIMEOUT} must be one of: 15, 30, 60, 120."
+                    ),
+                    None,
+                )
 
         # Convert value to string for CLI
         if isinstance(value, bool):

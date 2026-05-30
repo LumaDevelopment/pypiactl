@@ -12,7 +12,7 @@ from ._types import (
 )
 from .pypiactl import PIA
 
-__version__ = "0.1.0"
+__version__ = "3.7.2"
 __all__ = [
     "PIA",
     "PIAConfig",

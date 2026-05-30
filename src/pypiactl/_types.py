@@ -87,6 +87,7 @@ class PIAInformationType(Enum):
     REGIONS = "regions"
     REQUEST_PORT_FORWARD = "requestportforward"
     VPN_IP = "vpnip"
+    WIREGUARD_PING_TIMEOUT = "wireguardpingtimeout"
 
 
 class PIAPortForwardStatus(Enum):

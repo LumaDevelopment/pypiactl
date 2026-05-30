@@ -203,9 +203,9 @@ pia.background.disable()
 
 ### Information types
 
-Once the user is able to establish connections, they may wish to retrieve information about the connection, or perhaps change daemon settings which influence new connections (ex. the connection's region and protocol). To discuss this, we must first introduce the `PIAInformationType`. It is an enum used to describe pieces of information or settings to retrieve, monitor, and/or change.
+Once the user is able to establish connections, they may wish to retrieve information about the connection, or perhaps change daemon settings which influence new connections (ex. the connection's region and protocol). To discuss this, we must first introduce the `PIAInformationType`. It is an enum used to describe pieces of information or settings to retrieve, monitor, and/or change. Some values are only valid for specific operations; for example, `PIAInformationType.WIREGUARD_PING_TIMEOUT` can be changed with `PIA.set()`, but it cannot be retrieved with `PIA.get()` or monitored with `PIA.monitor.attach()`.
 
-#### `PIAInformationType` Values
+#### Retrievable `PIAInformationType` Values
 
 <table>
   <tr>
@@ -292,7 +292,7 @@ Once the user is able to establish connections, they may wish to retrieve inform
 
 ### Retrieving information
 
-Any [`PIAInformationType`](#piainformationtype-values) value can be retrieved using the library like so:
+Any [`PIAInformationType`](#retrievable-piainformationtype-values) value listed above can be retrieved using the library like so:
 
 ```python
 from pypiactl import PIA, PIAInformationType
@@ -302,11 +302,11 @@ pia = PIA()
 print(pia.get(PIAInformationType.CONNECTION_STATE))
 ```
 
-The type of the `data` attribute of the [`PIACommandResult`](#piacommandresult-attributes) instance that `PIA.get()` returns depends on the given [`PIAInformationType`](#piainformationtype-values).
+The type of the `data` attribute of the [`PIACommandResult`](#piacommandresult-attributes) instance that `PIA.get()` returns depends on the given [`PIAInformationType`](#retrievable-piainformationtype-values).
 
 ### Monitoring information
 
-Any [`PIAInformationType`](#piainformationtype-values) (except for `PIAInformationType.REGIONS`) can be monitored using the libary like so:
+Any [`PIAInformationType`](#retrievable-piainformationtype-values) value listed above can be monitored using the library, except for `PIAInformationType.REGIONS`:
 
 ```python
 import ipaddress
@@ -333,17 +333,18 @@ pia.disconnect()
 pia.monitor.detach(PIAInformationType.VPN_IP, observer)
 ```
 
-Similarly to [retrieving information](#retrieving-information), the type of the value that the function passed into `PIA.monitor.attach()` is called with depends on the given [`PIAInformationType`](#piainformationtype-values).
+Similarly to [retrieving information](#retrieving-information), the type of the value that the function passed into `PIA.monitor.attach()` is called with depends on the given [`PIAInformationType`](#retrievable-piainformationtype-values).
 
 ### Changing settings
 
-Any of the following [`PIAInformationType`](#piainformationtype-values) values can be updated:
+Any of the following `PIAInformationType` values can be updated:
 
 - `PIAInformationType.ALLOW_LAN`
 - `PIAInformationType.DEBUG_LOGGING`
 - `PIAInformationType.PROTOCOL`
 - `PIAInformationType.REGION`
 - `PIAInformationType.REQUEST_PORT_FORWARD`
+- `PIAInformationType.WIREGUARD_PING_TIMEOUT`
 
 Like so:
 
@@ -355,7 +356,7 @@ pia = PIA()
 pia.set(PIAInformationType.REGION, "jp-streaming-optimized")
 ```
 
-The correct type for the given value depends on the [`PIAInformationType`](#piainformationtype-values) being updated.
+The correct type for the given value depends on the `PIAInformationType` being updated. `PIAInformationType.WIREGUARD_PING_TIMEOUT` can only be set to `15`, `30`, `60`, or `120`.
 
 ### Resetting settings
 
